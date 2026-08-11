@@ -20,7 +20,7 @@ export default function Login() {
       setError(error)
       return
     }
-    navigate('/admin')
+    navigate('/')
   }
 
   return (
