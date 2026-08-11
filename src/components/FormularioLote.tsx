@@ -8,6 +8,7 @@ import DibujarPoligono from './DibujarPoligono'
 
 const schema = z.object({
   numero_lote: z.string().min(1, 'Requerido'),
+  proyecto: z.string().optional(),
   ancho: z.coerce.number().positive('Debe ser mayor a 0'),
   largo: z.coerce.number().positive('Debe ser mayor a 0'),
   precio_total: z.coerce.number().positive('Debe ser mayor a 0'),
@@ -44,6 +45,7 @@ export default function FormularioLote({ loteExistente, onDone, onCancel }: Prop
           precio_total: loteExistente.precio_total,
           plazos_totales: loteExistente.plazos_totales,
           comprador: loteExistente.comprador ?? '',
+          proyecto: loteExistente.proyecto ?? '',
         }
       : undefined,
   })
@@ -63,6 +65,7 @@ export default function FormularioLote({ loteExistente, onDone, onCancel }: Prop
       precio_total: values.precio_total,
       plazos_totales: values.plazos_totales,
       comprador: values.comprador || null,
+      proyecto: values.proyecto || null,
       coordenadas_poligono: poligono,
     }
 
@@ -109,6 +112,13 @@ export default function FormularioLote({ loteExistente, onDone, onCancel }: Prop
         <div className="col-span-2">
           <label className="label-field">Comprador (opcional)</label>
           <input {...register('comprador')} className="input-field" />
+        </div>
+        <div className="col-span-2">
+          <label className="label-field">Terreno / proyecto (opcional)</label>
+          <input {...register('proyecto')} className="input-field" placeholder="El Naranjal" />
+          <p className="text-[11px] text-ink-500 mt-1">
+            Si coincide con el nombre de otros lotes, se agrupan bajo un mismo contorno en el mapa.
+          </p>
         </div>
       </div>
 
