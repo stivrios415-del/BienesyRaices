@@ -67,6 +67,7 @@ export default function GeneradorCuadricula({ onDone, onCancel }: Props) {
     try {
       return generarCuadricula({
         prefijo: (v.prefijo || 'LT').toUpperCase(),
+        proyecto: v.nombreTerreno || 'Sin nombre',
         anchoTotal: Number(v.anchoTotal),
         largoTotal: Number(v.largoTotal),
         anchoSolar: Number(v.anchoSolar),
@@ -89,6 +90,7 @@ export default function GeneradorCuadricula({ onDone, onCancel }: Props) {
   const onSubmit = async (values: FormValues) => {
     const r = generarCuadricula({
       prefijo: values.prefijo,
+      proyecto: values.nombreTerreno,
       anchoTotal: values.anchoTotal,
       largoTotal: values.largoTotal,
       anchoSolar: values.anchoSolar,
@@ -108,6 +110,7 @@ export default function GeneradorCuadricula({ onDone, onCancel }: Props) {
 
     const payload = r.lotes.map((l) => ({
       numero_lote: l.numero_lote,
+      proyecto: l.proyecto,
       ancho: l.ancho,
       largo: l.largo,
       precio_total: l.precio_total,
