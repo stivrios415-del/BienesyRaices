@@ -9,10 +9,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   )
 }
 
-// Nota: se tipa explícitamente como SupabaseClient<any, any, any> a propósito.
-// El genérico <Database> estricto que exige supabase-js internamente (con el
-// campo "Relationships" en cada tabla) hacía que TypeScript infiriera "never"
-// en los métodos .insert()/.update() durante "tsc -b" en el build de Vercel.
-// El tipado de dominio real (Lote, Pago en src/types/lote.ts) sigue validando
-// los datos donde importa: en los formularios (zod) y en el store.
+// Se tipa explícitamente como SupabaseClient<any, any, any> a propósito:
+// el genérico <Database> estricto de supabase-js hacía que TypeScript
+// infiriera "never" en .insert()/.update() durante el build de Vercel.
 export const supabase: SupabaseClient<any, any, any> = createClient(supabaseUrl, supabaseAnonKey)
