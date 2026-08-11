@@ -14,6 +14,7 @@ interface LotesState {
   fetchPagos: (loteId: string) => Promise<void>
   registrarPago: (pago: Omit<Pago, 'id' | 'created_at'>) => Promise<{ error: string | null }>
   crearLote: (lote: Partial<Lote>) => Promise<{ error: string | null }>
+  crearLotesMasivo: (lotes: Partial<Lote>[]) => Promise<{ error: string | null }>
   actualizarLote: (id: string, cambios: Partial<Lote>) => Promise<{ error: string | null }>
   eliminarLote: (id: string) => Promise<{ error: string | null }>
   subscribeRealtime: () => () => void
@@ -67,14 +68,21 @@ export const useLotesStore = create<LotesState>((set, get) => ({
   },
 
   crearLote: async (lote) => {
-    const { error } = await supabase.from('lotes').insert(lote as never)
+    const { error } = await supabase.from('lotes').insert(lote)
+    if (error) return { error: error.message }
+    await get().fetchLotes()
+    return { error: null }
+  },
+
+  crearLotesMasivo: async (lotes) => {
+    const { error } = await supabase.from('lotes').insert(lotes)
     if (error) return { error: error.message }
     await get().fetchLotes()
     return { error: null }
   },
 
   actualizarLote: async (id, cambios) => {
-    const { error } = await supabase.from('lotes').update(cambios as never).eq('id', id)
+    const { error } = await supabase.from('lotes').update(cambios).eq('id', id)
     if (error) return { error: error.message }
     await get().fetchLotes()
     return { error: null }
