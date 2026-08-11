@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore'
 
 export default function Navbar() {
-  const { session, signOut } = useAuthStore()
+  const { signOut } = useAuthStore()
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `relative px-3.5 py-2 text-[13px] font-medium tracking-wide transition-colors ${
@@ -40,32 +40,21 @@ export default function Navbar() {
             </span>
           )}
         </NavLink>
-        {session && (
-          <NavLink to="/admin" className={linkClass}>
-            {({ isActive }) => (
-              <span className="flex flex-col items-center gap-1.5">
-                Administración
-                <span className={`h-[1.5px] w-full ${isActive ? 'bg-brass-400' : 'bg-transparent'}`} />
-              </span>
-            )}
-          </NavLink>
-        )}
+        <NavLink to="/admin" className={linkClass}>
+          {({ isActive }) => (
+            <span className="flex flex-col items-center gap-1.5">
+              Administración
+              <span className={`h-[1.5px] w-full ${isActive ? 'bg-brass-400' : 'bg-transparent'}`} />
+            </span>
+          )}
+        </NavLink>
         <div className="w-px h-5 bg-ink-700 mx-2" />
-        {session ? (
-          <button
-            onClick={() => signOut()}
-            className="px-3.5 py-2 text-[13px] font-medium text-ink-300 hover:text-paper transition-colors"
-          >
-            Cerrar sesión
-          </button>
-        ) : (
-          <NavLink
-            to="/login"
-            className="px-3.5 py-2 text-[13px] font-medium text-brass-400 hover:text-brass-200 transition-colors"
-          >
-            Iniciar sesión
-          </NavLink>
-        )}
+        <button
+          onClick={() => signOut()}
+          className="px-3.5 py-2 text-[13px] font-medium text-ink-300 hover:text-paper transition-colors"
+        >
+          Cerrar sesión
+        </button>
       </div>
     </nav>
   )
