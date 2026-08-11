@@ -58,7 +58,7 @@ export const useLotesStore = create<LotesState>((set, get) => ({
   },
 
   registrarPago: async (pago) => {
-    const { error } = await supabase.from('pagos').insert(pago)
+    const { error } = await supabase.from('pagos').insert(pago as any)
     if (error) return { error: error.message }
 
     // El trigger en Supabase actualiza saldo/estado del lote automáticamente.
@@ -68,21 +68,21 @@ export const useLotesStore = create<LotesState>((set, get) => ({
   },
 
   crearLote: async (lote) => {
-    const { error } = await supabase.from('lotes').insert(lote)
+    const { error } = await supabase.from('lotes').insert(lote as any)
     if (error) return { error: error.message }
     await get().fetchLotes()
     return { error: null }
   },
 
   crearLotesMasivo: async (lotes) => {
-    const { error } = await supabase.from('lotes').insert(lotes)
+    const { error } = await supabase.from('lotes').insert(lotes as any)
     if (error) return { error: error.message }
     await get().fetchLotes()
     return { error: null }
   },
 
   actualizarLote: async (id, cambios) => {
-    const { error } = await supabase.from('lotes').update(cambios).eq('id', id)
+    const { error } = await supabase.from('lotes').update(cambios as any).eq('id', id)
     if (error) return { error: error.message }
     await get().fetchLotes()
     return { error: null }
