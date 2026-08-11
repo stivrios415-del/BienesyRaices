@@ -2,29 +2,36 @@ import { useEffect, useState } from 'react'
 import { useLotesStore } from '../store/useLotesStore'
 import { useAuthStore } from '../store/useAuthStore'
 import { ESTADO_COLOR, ESTADO_COLOR_BG, ESTADO_LABEL, ESTADO_INICIAL } from '../types/lote'
-import type { Lote } from '../types/lote'
 import { formatMoneda, formatFecha } from '../utils/format'
 import FormularioPago from './FormularioPago'
 
 interface Props {
-  lote: Lote | null
+  loteId: string | null
   onClose: () => void
 }
 
-export default function LoteDetallePanel({ lote, onClose }: Props) {
+export default function LoteDetallePanel({ loteId, onClose }: Props) {
   const { session } = useAuthStore()
   const fetchPagos = useLotesStore((s) => s.fetchPagos)
   const pagosPorLote = useLotesStore((s) => s.pagosPorLote)
+
+  // Se lee el lote SIEMPRE desde el store (no desde una prop "congelada"),
+  // así que cuando registrarPago() actualiza el store, este componente
+  // se re-renderiza solo con el saldo/plazos/estado nuevos — en tiempo real.
+  const lote = useLotesStore((s) => s.lotes.find((l) => l.id === loteId) ?? null)
+
   const [mostrarFormPago, setMostrarFormPago] = useState(false)
   const [mensajeExito, setMensajeExito] = useState(false)
 
+  // Depende de loteId (no del objeto lote), para no resetear el formulario
+  // cada vez que el store se actualiza tras un pago.
   useEffect(() => {
-    if (lote) {
-      fetchPagos(lote.id)
+    if (loteId) {
+      fetchPagos(loteId)
       setMostrarFormPago(false)
       setMensajeExito(false)
     }
-  }, [lote, fetchPagos])
+  }, [loteId, fetchPagos])
 
   if (!lote) return null
 
@@ -37,7 +44,6 @@ export default function LoteDetallePanel({ lote, onClose }: Props) {
       <div className="fixed inset-0 bg-ink-950/50 z-30 md:hidden" onClick={onClose} />
 
       <aside className="fixed inset-y-0 right-0 z-40 w-full md:w-[440px] bg-paper shadow-2xl overflow-y-auto border-l border-paper-line">
-        {/* Encabezado — ficha catastral con sello de estado */}
         <div className="sticky top-0 bg-paper/95 backdrop-blur border-b border-paper-line px-6 pt-6 pb-5 survey-corners">
           <div className="flex items-start justify-between">
             <div>
@@ -58,7 +64,6 @@ export default function LoteDetallePanel({ lote, onClose }: Props) {
             </button>
           </div>
 
-          {/* Sello circular de estado — elemento de firma */}
           <div className="absolute top-5 right-14 hidden sm:flex">
             <div
               className="w-14 h-14 rounded-full flex items-center justify-center border-2 shadow-seal -rotate-6"
@@ -92,7 +97,7 @@ export default function LoteDetallePanel({ lote, onClose }: Props) {
             </div>
             <div className="h-1.5 bg-paper-dim rounded-full overflow-hidden">
               <div
-                className="h-full rounded-full transition-all"
+                className="h-full rounded-full transition-all duration-500"
                 style={{ width: `${progreso}%`, background: ESTADO_COLOR[lote.estado] }}
               />
             </div>
