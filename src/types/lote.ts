@@ -13,6 +13,7 @@ export interface Lote {
   largo: number
   area: number
   estado: EstadoLote
+  proyecto: string | null
   comprador: string | null
   fecha_compra: string | null
   precio_total: number
