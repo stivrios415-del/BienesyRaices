@@ -15,6 +15,7 @@ export interface ParametrosCuadricula {
   calle: number // m, separación entre solares (0 = sin calle)
   precioM2: number // precio por metro cuadrado
   plazosTotales: number
+  origen?: Punto // dónde arranca el dibujo en el lienzo (px). Por defecto ORIGEN_PX.
 }
 
 export interface LoteGenerado {
@@ -39,6 +40,7 @@ export interface ResultadoCuadricula {
 }
 
 export function generarCuadricula(p: ParametrosCuadricula): ResultadoCuadricula {
+  const origen = p.origen ?? ORIGEN_PX
   const columnas = Math.max(0, Math.floor((p.anchoTotal + p.calle) / (p.anchoSolar + p.calle)))
   const filas = Math.max(0, Math.floor((p.largoTotal + p.calle) / (p.largoSolar + p.calle)))
 
@@ -54,8 +56,8 @@ export function generarCuadricula(p: ParametrosCuadricula): ResultadoCuadricula 
   let n = 1
   for (let r = 0; r < filas; r++) {
     for (let c = 0; c < columnas; c++) {
-      const x0 = ORIGEN_PX.x + c * pasoXpx
-      const y0 = ORIGEN_PX.y + r * pasoYpx
+      const x0 = origen.x + c * pasoXpx
+      const y0 = origen.y + r * pasoYpx
       lotes.push({
         numero_lote: `${p.prefijo}-${String(n).padStart(3, '0')}`,
         proyecto: p.proyecto,
@@ -79,8 +81,8 @@ export function generarCuadricula(p: ParametrosCuadricula): ResultadoCuadricula 
     lotes,
     columnas,
     filas,
-    anchoTotalPx: ORIGEN_PX.x * 2 + columnas * pasoXpx,
-    altoTotalPx: ORIGEN_PX.y * 2 + filas * pasoYpx,
+    anchoTotalPx: origen.x + columnas * pasoXpx + ORIGEN_PX.x,
+    altoTotalPx: origen.y + filas * pasoYpx + ORIGEN_PX.y,
     areaUtilizadaM2: columnas * filas * areaSolar,
     areaTotalM2: p.anchoTotal * p.largoTotal,
   }
