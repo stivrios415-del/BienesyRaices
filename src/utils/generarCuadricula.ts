@@ -7,6 +7,7 @@ export const ORIGEN_PX = { x: 40, y: 40 }
 
 export interface ParametrosCuadricula {
   prefijo: string
+  proyecto: string // Nombre del terreno completo (ej. "El Naranjal") — agrupa los solares en el mapa
   anchoTotal: number // m, del terreno completo (ej. "El Naranjal")
   largoTotal: number // m
   anchoSolar: number // m, de cada solar individual
@@ -18,6 +19,7 @@ export interface ParametrosCuadricula {
 
 export interface LoteGenerado {
   numero_lote: string
+  proyecto: string
   ancho: number
   largo: number
   area: number
@@ -56,6 +58,7 @@ export function generarCuadricula(p: ParametrosCuadricula): ResultadoCuadricula 
       const y0 = ORIGEN_PX.y + r * pasoYpx
       lotes.push({
         numero_lote: `${p.prefijo}-${String(n).padStart(3, '0')}`,
+        proyecto: p.proyecto,
         ancho: p.anchoSolar,
         largo: p.largoSolar,
         area: areaSolar,
