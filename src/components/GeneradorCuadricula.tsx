@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Stage, Layer, Line, Text, Rect, Group } from 'react-konva'
 import { useLotesStore } from '../store/useLotesStore'
-import { generarCuadricula } from '../utils/generarCuadricula'
+import { generarCuadricula, ORIGEN_PX } from '../utils/generarCuadricula'
 import { formatMoneda } from '../utils/format'
 
 const schema = z.object({
@@ -44,8 +44,22 @@ const DEFAULTS: FormValues = {
 
 export default function GeneradorCuadricula({ onDone, onCancel }: Props) {
   const crearLotesMasivo = useLotesStore((s) => s.crearLotesMasivo)
+  const lotesExistentes = useLotesStore((s) => s.lotes)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Coloca la nueva cuadrícula al lado (a la derecha) de todo lo que ya
+  // existe en el mapa, en vez de siempre arrancar desde el mismo punto
+  // (lo que hacía que dos proyectos generados por separado quedaran
+  // encimados uno sobre el otro).
+  const origenSugerido = useMemo(() => {
+    const puntos = lotesExistentes.flatMap((l) => l.coordenadas_poligono ?? [])
+    if (puntos.length === 0) return ORIGEN_PX
+    const maxX = Math.max(...puntos.map((p) => p.x))
+    const minY = Math.min(...puntos.map((p) => p.y))
+    const SEPARACION_PX = 90
+    return { x: maxX + SEPARACION_PX, y: minY }
+  }, [lotesExistentes])
 
   const {
     register,
@@ -75,6 +89,9 @@ export default function GeneradorCuadricula({ onDone, onCancel }: Props) {
         calle: Number(v.calle) || 0,
         precioM2: Number(v.precioM2),
         plazosTotales: Number(v.plazosTotales),
+        // La vista previa siempre se dibuja desde el origen por defecto para
+        // que se vea centrada y a buen zoom; el desplazamiento real (para no
+        // encimarse con lo ya existente) se aplica solo al guardar.
       })
     } catch {
       return null
@@ -98,6 +115,7 @@ export default function GeneradorCuadricula({ onDone, onCancel }: Props) {
       calle: values.calle,
       precioM2: values.precioM2,
       plazosTotales: values.plazosTotales,
+      origen: origenSugerido,
     })
 
     if (r.lotes.length === 0) {
@@ -274,6 +292,11 @@ export default function GeneradorCuadricula({ onDone, onCancel }: Props) {
               label="Área utilizada"
               valor={`${resultado.areaUtilizadaM2.toLocaleString('es-HN')} m² de ${resultado.areaTotalM2.toLocaleString('es-HN')} m²`}
             />
+            {lotesExistentes.length > 0 && (
+              <p className="text-[11px] text-ink-500 pt-1 border-t border-paper-line mt-1">
+                Se colocará al lado de lo que ya existe en el mapa, no encima.
+              </p>
+            )}
             {resultado.lotes.length === 0 && (
               <p className="text-estado-vendido text-xs pt-1">No cabe ningún solar con estas medidas.</p>
             )}
