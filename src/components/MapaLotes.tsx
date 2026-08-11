@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { Stage, Layer, Line, Text, Group, Circle } from 'react-konva'
+import { Stage, Layer, Line, Text, Group, Circle, Rect } from 'react-konva'
 import type Konva from 'konva'
 import { useLotesStore } from '../store/useLotesStore'
 import { ESTADO_COLOR, ESTADO_LABEL } from '../types/lote'
@@ -55,6 +55,34 @@ export default function MapaLotes({ onSelect }: Props) {
 
   const lotesRenderizables = useMemo(() => lotes.filter((l) => l.coordenadas_poligono?.length >= 3), [lotes])
 
+  // Agrupa los solares que comparten "proyecto" (ej. "El Naranjal") para dibujar
+  // un único contorno contenedor con todos los solares trazados adentro.
+  const contenedores = useMemo(() => {
+    const grupos = new Map<string, typeof lotesRenderizables>()
+    lotesRenderizables.forEach((l) => {
+      const nombre = l.proyecto?.trim()
+      if (!nombre) return
+      if (!grupos.has(nombre)) grupos.set(nombre, [])
+      grupos.get(nombre)!.push(l)
+    })
+    return Array.from(grupos.entries()).map(([nombre, lotesGrupo]) => {
+      const puntos = lotesGrupo.flatMap((l) => l.coordenadas_poligono)
+      const minX = Math.min(...puntos.map((p) => p.x))
+      const minY = Math.min(...puntos.map((p) => p.y))
+      const maxX = Math.max(...puntos.map((p) => p.x))
+      const maxY = Math.max(...puntos.map((p) => p.y))
+      const pad = 16
+      return {
+        nombre,
+        x: minX - pad,
+        y: minY - pad,
+        width: maxX - minX + pad * 2,
+        height: maxY - minY + pad * 2,
+        cantidad: lotesGrupo.length,
+      }
+    })
+  }, [lotesRenderizables])
+
   const conteo = useMemo(() => {
     return {
       disponible: lotes.filter((l) => l.estado === 'disponible').length,
@@ -94,6 +122,31 @@ export default function MapaLotes({ onSelect }: Props) {
         y={stagePos.y}
       >
         <Layer>
+          {/* Contorno del terreno completo — dibujado primero, queda detrás de los solares */}
+          {contenedores.map((c) => (
+            <Group key={c.nombre}>
+              <Rect
+                x={c.x}
+                y={c.y}
+                width={c.width}
+                height={c.height}
+                stroke="#A8823D"
+                strokeWidth={1.5}
+                dash={[9, 6]}
+                cornerRadius={2}
+              />
+              <Text
+                text={`${c.nombre.toUpperCase()}  ·  ${c.cantidad} SOLARES`}
+                x={c.x + 4}
+                y={c.y - 20}
+                fontSize={12}
+                fontFamily="JetBrains Mono, monospace"
+                fontStyle="600"
+                fill="#8C6A2E"
+              />
+            </Group>
+          ))}
+
           {lotesRenderizables.map((lote) => {
             const puntos = aPlano(lote.coordenadas_poligono)
             const c = centroide(lote.coordenadas_poligono)
