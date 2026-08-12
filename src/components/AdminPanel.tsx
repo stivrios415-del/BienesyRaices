@@ -26,10 +26,10 @@ export default function AdminPanel() {
 
   if (modo === 'generar') {
     return (
-      <div className="p-5 md:p-8 max-w-4xl mx-auto">
+      <div className="p-4 md:p-8 max-w-4xl mx-auto">
         <div className="eyebrow mb-1">Subdivisión automática</div>
-        <h1 className="font-display text-2xl text-ink-900 mb-6">Generar cuadrícula de solares</h1>
-        <div className="card p-6">
+        <h1 className="font-display text-xl md:text-2xl text-ink-900 mb-5 md:mb-6">Generar cuadrícula de solares</h1>
+        <div className="card p-4 md:p-6">
           <GeneradorCuadricula onDone={cerrarFormulario} onCancel={cerrarFormulario} />
         </div>
       </div>
@@ -38,12 +38,12 @@ export default function AdminPanel() {
 
   if (modo === 'crear-manual' || (modo === 'editar' && loteEditando)) {
     return (
-      <div className="p-5 md:p-8 max-w-xl mx-auto">
+      <div className="p-4 md:p-8 max-w-xl mx-auto">
         <div className="eyebrow mb-1">{modo === 'crear-manual' ? 'Lote individual' : 'Editar parcela'}</div>
-        <h1 className="font-display text-2xl text-ink-900 mb-6">
+        <h1 className="font-display text-xl md:text-2xl text-ink-900 mb-5 md:mb-6">
           {modo === 'crear-manual' ? 'Agregar un solo lote' : `Lote ${loteEditando?.numero_lote}`}
         </h1>
-        <div className="card p-6">
+        <div className="card p-4 md:p-6">
           <FormularioLote
             loteExistente={modo === 'editar' ? loteEditando : null}
             onDone={cerrarFormulario}
@@ -55,23 +55,24 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="p-5 md:p-8 space-y-5 max-w-6xl mx-auto">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="p-4 md:p-8 space-y-4 md:space-y-5 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <div className="eyebrow mb-1">Administración</div>
-          <h1 className="font-display text-2xl text-ink-900">Parcelas registradas</h1>
+          <h1 className="font-display text-xl md:text-2xl text-ink-900">Parcelas registradas</h1>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setModo('crear-manual')} className="btn-secondary">
+          <button onClick={() => setModo('crear-manual')} className="btn-secondary flex-1 sm:flex-none">
             + Lote individual
           </button>
-          <button onClick={() => setModo('generar')} className="btn-primary">
-            ⊞ Generar cuadrícula automática
+          <button onClick={() => setModo('generar')} className="btn-primary flex-1 sm:flex-none">
+            ⊞ Generar cuadrícula
           </button>
         </div>
       </div>
 
-      <div className="card overflow-x-auto">
+      {/* Tabla completa — desktop */}
+      <div className="hidden md:block card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-ink-900 text-paper/80 text-left">
             <tr>
@@ -124,6 +125,51 @@ export default function AdminPanel() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Tarjetas apilables — móvil */}
+      <div className="md:hidden space-y-2.5">
+        {lotes.map((lote) => (
+          <div key={lote.id} className="card px-4 py-3.5">
+            <div className="flex items-center justify-between">
+              <p className="font-mono font-semibold text-ink-900 text-[15px]">{lote.numero_lote}</p>
+              <p className="font-mono tabular text-ink-700 text-sm">{formatMoneda(lote.precio_total)}</p>
+            </div>
+            <p className="text-xs text-ink-500 capitalize mt-1">{lote.estado.replace('_', ' ')}</p>
+
+            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-paper-line">
+              <button
+                className="text-brass-600 text-xs font-medium"
+                onClick={() => {
+                  setLoteEditando(lote)
+                  setModo('editar')
+                }}
+              >
+                Editar
+              </button>
+              {confirmandoId === lote.id ? (
+                <>
+                  <span className="text-ink-500 text-xs">¿Confirmar?</span>
+                  <button className="btn-danger-ghost" onClick={() => handleEliminar(lote.id)}>
+                    Sí, eliminar
+                  </button>
+                  <button className="text-ink-500 text-xs" onClick={() => setConfirmandoId(null)}>
+                    Cancelar
+                  </button>
+                </>
+              ) : (
+                <button className="btn-danger-ghost" onClick={() => setConfirmandoId(lote.id)}>
+                  Eliminar
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+        {lotes.length === 0 && (
+          <div className="card px-4 py-10 text-center text-ink-500 text-sm">
+            Todavía no hay lotes registrados. Usa "Generar cuadrícula" para crear varios de una vez.
+          </div>
+        )}
       </div>
     </div>
   )
