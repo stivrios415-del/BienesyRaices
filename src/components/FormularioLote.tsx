@@ -83,7 +83,7 @@ export default function FormularioLote({ loteExistente, onDone, onCancel }: Prop
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3 md:gap-4">
         <div className="col-span-2">
           <label className="label-field">Número de lote</label>
           <input {...register('numero_lote')} className="input-field font-mono" placeholder="LT-014" />
