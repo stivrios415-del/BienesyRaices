@@ -6,6 +6,7 @@ import { Stage, Layer, Line, Text, Rect, Group } from 'react-konva'
 import { useLotesStore } from '../store/useLotesStore'
 import { generarCuadricula, ORIGEN_PX } from '../utils/generarCuadricula'
 import { formatMoneda } from '../utils/format'
+import { useAnchoContenedor } from '../hooks/useAnchoContenedor'
 
 const schema = z.object({
   nombreTerreno: z.string().min(1, 'Requerido'),
@@ -98,8 +99,8 @@ export default function GeneradorCuadricula({ onDone, onCancel }: Props) {
     }
   }, [valores])
 
-  const previewBoxW = 400
-  const previewBoxH = 300
+  const [previewRef, previewBoxW] = useAnchoContenedor<HTMLDivElement>(400)
+  const previewBoxH = Math.round(previewBoxW * 0.75)
   const previewScale = resultado
     ? Math.min(previewBoxW / resultado.anchoTotalPx, previewBoxH / resultado.altoTotalPx, 1)
     : 1
@@ -152,7 +153,7 @@ export default function GeneradorCuadricula({ onDone, onCancel }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid md:grid-cols-[1fr_400px] gap-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="grid md:grid-cols-[1fr_380px] gap-6">
       <div className="space-y-5">
         <div>
           <label className="label-field">Nombre del terreno</label>
@@ -237,9 +238,13 @@ export default function GeneradorCuadricula({ onDone, onCancel }: Props) {
       </div>
 
       {/* Vista previa en vivo */}
-      <div className="space-y-3">
+      <div className="space-y-3 order-first md:order-none">
         <div className="eyebrow">Vista previa</div>
-        <div className="card overflow-hidden bg-paper bg-blueprint bg-grid" style={{ width: previewBoxW, height: previewBoxH }}>
+        <div
+          ref={previewRef}
+          className="card overflow-hidden bg-paper bg-blueprint bg-grid w-full"
+          style={{ height: previewBoxH }}
+        >
           {resultado && resultado.lotes.length > 0 ? (
             <Stage width={previewBoxW} height={previewBoxH} scaleX={previewScale} scaleY={previewScale}>
               <Layer>
