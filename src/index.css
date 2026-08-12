@@ -21,6 +21,18 @@ body {
   outline-offset: 2px;
 }
 
+/* iOS/Android hacen zoom automático al enfocar un input si su texto mide
+   menos de 16px. En vez de desactivar el zoom del usuario en el viewport
+   (lo cual rompe accesibilidad), se sube el tamaño de fuente de los campos
+   solo en pantallas móviles — el zoom automático deja de dispararse. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* Estado: badge tipo sello, no una píldora genérica */
 .estado-badge {
   @apply inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest2 px-2.5 py-1 rounded-[3px];
