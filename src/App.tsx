@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
+import MobileTabBar from './components/MobileTabBar'
 import ProtectedRoute from './components/ProtectedRoute'
 import MapaPage from './pages/MapaPage'
 import TablaPage from './pages/TablaPage'
@@ -28,40 +29,44 @@ export default function App() {
 
   // La barra de navegación no tiene sentido en la pantalla de login
   // (todavía no hay sesión ni nada que navegar).
-  const mostrarNavbar = location.pathname !== '/login'
+  const enSesion = location.pathname !== '/login'
 
   return (
     <div className="h-screen flex flex-col">
-      {mostrarNavbar && <Navbar />}
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
+      {enSesion && <Navbar />}
+      {/* pb-16 en móvil deja espacio para la barra inferior fija */}
+      <div className={`flex-1 flex flex-col overflow-hidden ${enSesion ? 'pb-16 md:pb-0' : ''}`}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
 
-        {/* Todo el sitio requiere sesión iniciada — el login aparece de entrada. */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <MapaPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/tabla"
-          element={
-            <ProtectedRoute>
-              <TablaPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <AdminPage />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
+          {/* Todo el sitio requiere sesión iniciada — el login aparece de entrada. */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <MapaPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tabla"
+            element={
+              <ProtectedRoute>
+                <TablaPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </div>
+      {enSesion && <MobileTabBar />}
     </div>
   )
 }
