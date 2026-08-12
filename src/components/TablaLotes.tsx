@@ -31,10 +31,10 @@ export default function TablaLotes({ onSelect }: Props) {
   }, [lotes, busqueda, filtroEstado, precioMin, precioMax])
 
   return (
-    <div className="p-5 md:p-8 space-y-5 max-w-6xl mx-auto">
+    <div className="p-4 md:p-8 space-y-4 md:space-y-5 max-w-6xl mx-auto">
       <div>
         <div className="eyebrow mb-1">Registro</div>
-        <h1 className="font-display text-2xl text-ink-900">Todos los lotes</h1>
+        <h1 className="font-display text-xl md:text-2xl text-ink-900">Todos los lotes</h1>
       </div>
 
       <div className="card p-3.5 flex flex-wrap gap-3 items-center">
@@ -43,7 +43,7 @@ export default function TablaLotes({ onSelect }: Props) {
           placeholder="Buscar por lote o comprador…"
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
-          className="input-field flex-1 min-w-[180px]"
+          className="input-field flex-1 min-w-[160px]"
         />
         <select
           value={filtroEstado}
@@ -60,18 +60,19 @@ export default function TablaLotes({ onSelect }: Props) {
           placeholder="Precio mín."
           value={precioMin}
           onChange={(e) => setPrecioMin(e.target.value)}
-          className="input-field w-32 font-mono"
+          className="input-field w-[45%] sm:w-32 font-mono"
         />
         <input
           type="number"
           placeholder="Precio máx."
           value={precioMax}
           onChange={(e) => setPrecioMax(e.target.value)}
-          className="input-field w-32 font-mono"
+          className="input-field w-[45%] sm:w-32 font-mono"
         />
       </div>
 
-      <div className="card overflow-x-auto">
+      {/* Tabla completa — solo en pantallas medianas en adelante */}
+      <div className="hidden md:block card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-ink-900 text-paper/80 text-left">
             <tr>
@@ -118,6 +119,47 @@ export default function TablaLotes({ onSelect }: Props) {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Tarjetas apilables — solo en móvil, en vez de una tabla apretada con scroll horizontal */}
+      <div className="md:hidden space-y-2.5">
+        {filtrados.map((lote) => (
+          <button
+            key={lote.id}
+            onClick={() => onSelect(lote)}
+            className="card w-full text-left px-4 py-3.5 active:bg-brass-50/60 transition-colors"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="font-mono font-semibold text-ink-900 text-[15px]">{lote.numero_lote}</p>
+                <p className="text-xs text-ink-500 font-mono mt-0.5">
+                  {lote.ancho} × {lote.largo} m
+                </p>
+              </div>
+              <span
+                className="estado-badge shrink-0"
+                style={{ background: ESTADO_COLOR_BG[lote.estado], color: ESTADO_COLOR[lote.estado] }}
+              >
+                {ESTADO_LABEL[lote.estado]}
+              </span>
+            </div>
+            <div className="flex items-end justify-between mt-3 pt-3 border-t border-paper-line">
+              <div>
+                <p className="text-[10px] text-ink-500 uppercase tracking-wide">Comprador</p>
+                <p className="text-sm text-ink-700">{lote.comprador ?? '—'}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] text-ink-500 uppercase tracking-wide">Saldo</p>
+                <p className="text-sm font-mono tabular text-ink-900">{formatMoneda(lote.saldo_restante)}</p>
+              </div>
+            </div>
+          </button>
+        ))}
+        {filtrados.length === 0 && (
+          <div className="card px-4 py-10 text-center text-ink-500 text-sm">
+            No hay lotes que coincidan con los filtros.
+          </div>
+        )}
       </div>
     </div>
   )
