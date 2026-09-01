@@ -4,25 +4,32 @@ import type { Lote, Pago } from '../types/lote'
 
 interface LotesState {
   lotes: Lote[]
+  lotesArchivados: Lote[]
   loading: boolean
+  loadingArchivados: boolean
   error: string | null
   selectedLoteId: string | null
   pagosPorLote: Record<string, Pago[]>
 
   fetchLotes: () => Promise<void>
+  fetchLotesArchivados: () => Promise<void>
   selectLote: (id: string | null) => void
   fetchPagos: (loteId: string) => Promise<void>
   registrarPago: (pago: Omit<Pago, 'id' | 'created_at'>) => Promise<{ error: string | null }>
   crearLote: (lote: Partial<Lote>) => Promise<{ error: string | null }>
   crearLotesMasivo: (lotes: Partial<Lote>[]) => Promise<{ error: string | null }>
   actualizarLote: (id: string, cambios: Partial<Lote>) => Promise<{ error: string | null }>
-  eliminarLote: (id: string) => Promise<{ error: string | null }>
+  archivarLote: (id: string) => Promise<{ error: string | null }>
+  restaurarLote: (id: string) => Promise<{ error: string | null }>
+  eliminarLotePermanente: (id: string) => Promise<{ error: string | null }>
   subscribeRealtime: () => () => void
 }
 
 export const useLotesStore = create<LotesState>((set, get) => ({
   lotes: [],
+  lotesArchivados: [],
   loading: false,
+  loadingArchivados: false,
   error: null,
   selectedLoteId: null,
   pagosPorLote: {},
@@ -32,6 +39,7 @@ export const useLotesStore = create<LotesState>((set, get) => ({
     const { data, error } = await supabase
       .from('lotes')
       .select('*')
+      .eq('archivado', false)
       .order('numero_lote', { ascending: true })
 
     if (error) {
@@ -39,6 +47,21 @@ export const useLotesStore = create<LotesState>((set, get) => ({
       return
     }
     set({ lotes: (data ?? []) as unknown as Lote[], loading: false })
+  },
+
+  fetchLotesArchivados: async () => {
+    set({ loadingArchivados: true })
+    const { data, error } = await supabase
+      .from('lotes')
+      .select('*')
+      .eq('archivado', true)
+      .order('updated_at', { ascending: false })
+
+    if (!error && data) {
+      set({ lotesArchivados: data as unknown as Lote[], loadingArchivados: false })
+    } else {
+      set({ loadingArchivados: false })
+    }
   },
 
   selectLote: (id) => set({ selectedLoteId: id }),
@@ -87,10 +110,30 @@ export const useLotesStore = create<LotesState>((set, get) => ({
     return { error: null }
   },
 
-  eliminarLote: async (id) => {
-    const { error } = await supabase.from('lotes').delete().eq('id', id)
+  // "Eliminar" un lote ya NO borra la fila: la marca como archivada.
+  // Así se puede restaurar y el historial de pagos asociado no se pierde.
+  archivarLote: async (id) => {
+    const { error } = await supabase.from('lotes').update({ archivado: true } as any).eq('id', id)
     if (error) return { error: error.message }
     await get().fetchLotes()
+    await get().fetchLotesArchivados()
+    return { error: null }
+  },
+
+  restaurarLote: async (id) => {
+    const { error } = await supabase.from('lotes').update({ archivado: false } as any).eq('id', id)
+    if (error) return { error: error.message }
+    await get().fetchLotes()
+    await get().fetchLotesArchivados()
+    return { error: null }
+  },
+
+  // Este sí borra la fila de verdad (y en cascada sus pagos). Solo se
+  // permite sobre lotes que ya están en la papelera, como última instancia.
+  eliminarLotePermanente: async (id) => {
+    const { error } = await supabase.from('lotes').delete().eq('id', id)
+    if (error) return { error: error.message }
+    await get().fetchLotesArchivados()
     return { error: null }
   },
 
