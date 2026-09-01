@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useLotesStore } from '../store/useLotesStore'
 import { useAuthStore } from '../store/useAuthStore'
+import { useFacturacionStore } from '../store/useFacturacionStore'
 import { ESTADO_COLOR, ESTADO_COLOR_BG, ESTADO_LABEL, ESTADO_INICIAL } from '../types/lote'
+import type { Pago } from '../types/lote'
 import { formatMoneda, formatFecha } from '../utils/format'
+import { generarReciboPDF } from '../utils/generarReciboPDF'
 import FormularioPago from './FormularioPago'
 
 interface Props {
@@ -14,17 +17,18 @@ export default function LoteDetallePanel({ loteId, onClose }: Props) {
   const { session } = useAuthStore()
   const fetchPagos = useLotesStore((s) => s.fetchPagos)
   const pagosPorLote = useLotesStore((s) => s.pagosPorLote)
+  const asignarCorrelativoCai = useLotesStore((s) => s.asignarCorrelativoCai)
 
-  // Se lee el lote SIEMPRE desde el store (no desde una prop "congelada"),
-  // así que cuando registrarPago() actualiza el store, este componente
-  // se re-renderiza solo con el saldo/plazos/estado nuevos — en tiempo real.
+  const configFacturacion = useFacturacionStore((s) => s.config)
+  const fetchConfigFacturacion = useFacturacionStore((s) => s.fetchConfig)
+  const siguienteCorrelativo = useFacturacionStore((s) => s.siguienteCorrelativo)
+
   const lote = useLotesStore((s) => s.lotes.find((l) => l.id === loteId) ?? null)
 
   const [mostrarFormPago, setMostrarFormPago] = useState(false)
   const [mensajeExito, setMensajeExito] = useState(false)
+  const [generandoReciboId, setGenerandoReciboId] = useState<string | null>(null)
 
-  // Depende de loteId (no del objeto lote), para no resetear el formulario
-  // cada vez que el store se actualiza tras un pago.
   useEffect(() => {
     if (loteId) {
       fetchPagos(loteId)
@@ -33,11 +37,46 @@ export default function LoteDetallePanel({ loteId, onClose }: Props) {
     }
   }, [loteId, fetchPagos])
 
+  // Los datos fiscales solo hacen falta si hay sesión (el botón de recibo
+  // también está gated a sesión), así que se cargan una vez al iniciar.
+  useEffect(() => {
+    if (session) fetchConfigFacturacion()
+  }, [session, fetchConfigFacturacion])
+
   if (!lote) return null
 
   const pagos = pagosPorLote[lote.id] ?? []
   const plazosPagados = lote.plazos_pagados ?? 0
   const progreso = lote.plazos_totales > 0 ? Math.min(100, Math.round((plazosPagados / lote.plazos_totales) * 100)) : 0
+
+  const handleGenerarRecibo = async (pago: Pago) => {
+    if (!configFacturacion) {
+      alert('Primero configura los datos de facturación (CAI, RTN) desde Administración → Facturación.')
+      return
+    }
+    if (!configFacturacion.cai) {
+      alert('Todavía no has puesto el CAI en Administración → Facturación.')
+      return
+    }
+
+    setGenerandoReciboId(pago.id)
+
+    let correlativo = pago.correlativo_cai
+    if (!correlativo) {
+      const nuevo = await siguienteCorrelativo()
+      if (!nuevo) {
+        setGenerandoReciboId(null)
+        alert('No se pudo generar el número de recibo. Intenta de nuevo.')
+        return
+      }
+      await asignarCorrelativoCai(pago.id, nuevo)
+      await fetchPagos(lote.id)
+      correlativo = nuevo
+    }
+
+    generarReciboPDF({ lote, pago: { ...pago, correlativo_cai: correlativo }, correlativo, config: configFacturacion })
+    setGenerandoReciboId(null)
+  }
 
   return (
     <>
@@ -152,6 +191,7 @@ export default function LoteDetallePanel({ loteId, onClose }: Props) {
                     <th className="py-1.5 font-medium">Fecha</th>
                     <th className="py-1.5 font-medium">Monto</th>
                     <th className="py-1.5 font-medium">Método</th>
+                    {session && <th className="py-1.5 font-medium"></th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -160,6 +200,17 @@ export default function LoteDetallePanel({ loteId, onClose }: Props) {
                       <td className="py-2 font-mono text-xs text-ink-700">{formatFecha(p.fecha_pago)}</td>
                       <td className="py-2 font-mono text-xs tabular text-ink-900">{formatMoneda(p.monto)}</td>
                       <td className="py-2 capitalize text-ink-700">{p.metodo}</td>
+                      {session && (
+                        <td className="py-2 text-right">
+                          <button
+                            onClick={() => handleGenerarRecibo(p)}
+                            disabled={generandoReciboId === p.id}
+                            className="text-brass-600 text-xs font-medium hover:underline disabled:opacity-40"
+                          >
+                            {generandoReciboId === p.id ? '…' : p.correlativo_cai ? 'Ver recibo' : 'Recibo PDF'}
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
