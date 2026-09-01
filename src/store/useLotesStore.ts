@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
-import type { Lote, Pago } from '../types/lote'
+import type { Lote, Pago, PagoConLote } from '../types/lote'
 
 interface LotesState {
   lotes: Lote[]
@@ -15,6 +15,7 @@ interface LotesState {
   fetchLotesArchivados: () => Promise<void>
   selectLote: (id: string | null) => void
   fetchPagos: (loteId: string) => Promise<void>
+  fetchTodosPagosParaExportar: () => Promise<PagoConLote[]>
   registrarPago: (pago: Omit<Pago, 'id' | 'created_at'>) => Promise<{ error: string | null }>
   crearLote: (lote: Partial<Lote>) => Promise<{ error: string | null }>
   crearLotesMasivo: (lotes: Partial<Lote>[]) => Promise<{ error: string | null }>
@@ -80,6 +81,32 @@ export const useLotesStore = create<LotesState>((set, get) => ({
     }
   },
 
+  // Trae TODOS los pagos de TODOS los lotes, con el número de lote/proyecto/
+  // comprador ya incrustado (join con "lotes"), listo para el reporte de
+  // contabilidad. No se guarda en el estado global: es un dato de un solo
+  // uso para exportar, no algo que la interfaz necesite mantener actualizado.
+  fetchTodosPagosParaExportar: async () => {
+    const { data, error } = await supabase
+      .from('pagos')
+      .select('*, lote:lotes(numero_lote, proyecto, comprador)')
+      .order('fecha_pago', { ascending: false })
+
+    if (error || !data) return []
+
+    return (data as any[]).map((p) => ({
+      id: p.id,
+      lote_id: p.lote_id,
+      monto: p.monto,
+      fecha_pago: p.fecha_pago,
+      metodo: p.metodo,
+      numero_recibo: p.numero_recibo,
+      created_at: p.created_at,
+      numero_lote: p.lote?.numero_lote,
+      proyecto: p.lote?.proyecto,
+      comprador: p.lote?.comprador,
+    })) as PagoConLote[]
+  },
+
   registrarPago: async (pago) => {
     const { error } = await supabase.from('pagos').insert(pago as any)
     if (error) return { error: error.message }
@@ -110,8 +137,6 @@ export const useLotesStore = create<LotesState>((set, get) => ({
     return { error: null }
   },
 
-  // "Eliminar" un lote ya NO borra la fila: la marca como archivada.
-  // Así se puede restaurar y el historial de pagos asociado no se pierde.
   archivarLote: async (id) => {
     const { error } = await supabase.from('lotes').update({ archivado: true } as any).eq('id', id)
     if (error) return { error: error.message }
@@ -128,8 +153,6 @@ export const useLotesStore = create<LotesState>((set, get) => ({
     return { error: null }
   },
 
-  // Este sí borra la fila de verdad (y en cascada sus pagos). Solo se
-  // permite sobre lotes que ya están en la papelera, como última instancia.
   eliminarLotePermanente: async (id) => {
     const { error } = await supabase.from('lotes').delete().eq('id', id)
     if (error) return { error: error.message }
@@ -138,12 +161,6 @@ export const useLotesStore = create<LotesState>((set, get) => ({
   },
 
   subscribeRealtime: () => {
-    // Al generar una cuadrícula grande (ej. 173 lotes de golpe), Supabase
-    // dispara un evento de "postgres_changes" POR CADA FILA insertada.
-    // Sin agrupar, eso eran ~173 recargas completas y re-renderizados del
-    // mapa en cadena — la causa principal de la traba en móvil.
-    // Se agrupan (debounce) todos los eventos que lleguen en una ráfaga y
-    // solo se recarga una vez, cuando la ráfaga se calma.
     let timeoutLotes: ReturnType<typeof setTimeout> | null = null
     const recargarLotesAgrupado = () => {
       if (timeoutLotes) clearTimeout(timeoutLotes)
