@@ -6,8 +6,9 @@ import { exportarPagosExcel } from '../utils/exportarExcel'
 import FormularioLote from './FormularioLote'
 import GeneradorCuadricula from './GeneradorCuadricula'
 import Papelera from './Papelera'
+import ConfiguracionFacturacion from './ConfiguracionFacturacion'
 
-type Modo = 'lista' | 'generar' | 'crear-manual' | 'editar' | 'papelera'
+type Modo = 'lista' | 'generar' | 'crear-manual' | 'editar' | 'papelera' | 'facturacion'
 
 export default function AdminPanel() {
   const lotes = useLotesStore((s) => s.lotes)
@@ -49,6 +50,10 @@ export default function AdminPanel() {
     return <Papelera onCerrar={() => setModo('lista')} />
   }
 
+  if (modo === 'facturacion') {
+    return <ConfiguracionFacturacion onCerrar={() => setModo('lista')} />
+  }
+
   if (modo === 'generar') {
     return (
       <div className="p-4 md:p-8 max-w-4xl mx-auto">
@@ -87,12 +92,15 @@ export default function AdminPanel() {
           <h1 className="font-display text-xl md:text-2xl text-ink-900">Parcelas registradas</h1>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button onClick={() => setModo('facturacion')} className="btn-secondary">
+            ⚙ Facturación
+          </button>
           <button
             onClick={handleExportarPagos}
             disabled={exportandoPagos}
             className="btn-secondary disabled:opacity-40"
           >
-            {exportandoPagos ? 'Preparando…' : '⬇ Exportar pagos (Excel)'}
+            {exportandoPagos ? 'Preparando…' : '⬇ Exportar pagos'}
           </button>
           <button onClick={() => setModo('papelera')} className="btn-secondary relative">
             🗑 Papelera
