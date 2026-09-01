@@ -1,27 +1,40 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLotesStore } from '../store/useLotesStore'
 import type { Lote } from '../types/lote'
 import { formatMoneda } from '../utils/format'
 import FormularioLote from './FormularioLote'
 import GeneradorCuadricula from './GeneradorCuadricula'
+import Papelera from './Papelera'
 
-type Modo = 'lista' | 'generar' | 'crear-manual' | 'editar'
+type Modo = 'lista' | 'generar' | 'crear-manual' | 'editar' | 'papelera'
 
 export default function AdminPanel() {
   const lotes = useLotesStore((s) => s.lotes)
-  const eliminarLote = useLotesStore((s) => s.eliminarLote)
+  const lotesArchivados = useLotesStore((s) => s.lotesArchivados)
+  const fetchLotesArchivados = useLotesStore((s) => s.fetchLotesArchivados)
+  const archivarLote = useLotesStore((s) => s.archivarLote)
   const [modo, setModo] = useState<Modo>('lista')
   const [loteEditando, setLoteEditando] = useState<Lote | null>(null)
   const [confirmandoId, setConfirmandoId] = useState<string | null>(null)
+
+  // Se carga el conteo de la papelera una vez, para mostrar el badge
+  // sin tener que entrar a la vista de papelera primero.
+  useEffect(() => {
+    fetchLotesArchivados()
+  }, [fetchLotesArchivados])
 
   const cerrarFormulario = () => {
     setModo('lista')
     setLoteEditando(null)
   }
 
-  const handleEliminar = async (id: string) => {
-    await eliminarLote(id)
+  const handleArchivar = async (id: string) => {
+    await archivarLote(id)
     setConfirmandoId(null)
+  }
+
+  if (modo === 'papelera') {
+    return <Papelera onCerrar={() => setModo('lista')} />
   }
 
   if (modo === 'generar') {
@@ -61,7 +74,15 @@ export default function AdminPanel() {
           <div className="eyebrow mb-1">Administración</div>
           <h1 className="font-display text-xl md:text-2xl text-ink-900">Parcelas registradas</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => setModo('papelera')} className="btn-secondary relative">
+            🗑 Papelera
+            {lotesArchivados.length > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-estado-vendido text-white text-[10px] font-semibold">
+                {lotesArchivados.length}
+              </span>
+            )}
+          </button>
           <button onClick={() => setModo('crear-manual')} className="btn-secondary flex-1 sm:flex-none">
             + Lote individual
           </button>
@@ -100,9 +121,9 @@ export default function AdminPanel() {
                   </button>
                   {confirmandoId === lote.id ? (
                     <>
-                      <span className="text-ink-500 text-xs">¿Confirmar?</span>
-                      <button className="btn-danger-ghost" onClick={() => handleEliminar(lote.id)}>
-                        Sí, eliminar
+                      <span className="text-ink-500 text-xs">¿Enviar a la papelera?</span>
+                      <button className="btn-danger-ghost" onClick={() => handleArchivar(lote.id)}>
+                        Sí, archivar
                       </button>
                       <button className="text-ink-500 text-xs hover:underline" onClick={() => setConfirmandoId(null)}>
                         Cancelar
@@ -110,7 +131,7 @@ export default function AdminPanel() {
                     </>
                   ) : (
                     <button className="btn-danger-ghost" onClick={() => setConfirmandoId(lote.id)}>
-                      Eliminar
+                      Archivar
                     </button>
                   )}
                 </td>
@@ -149,9 +170,9 @@ export default function AdminPanel() {
               </button>
               {confirmandoId === lote.id ? (
                 <>
-                  <span className="text-ink-500 text-xs">¿Confirmar?</span>
-                  <button className="btn-danger-ghost" onClick={() => handleEliminar(lote.id)}>
-                    Sí, eliminar
+                  <span className="text-ink-500 text-xs">¿Archivar?</span>
+                  <button className="btn-danger-ghost" onClick={() => handleArchivar(lote.id)}>
+                    Sí, archivar
                   </button>
                   <button className="text-ink-500 text-xs" onClick={() => setConfirmandoId(null)}>
                     Cancelar
@@ -159,7 +180,7 @@ export default function AdminPanel() {
                 </>
               ) : (
                 <button className="btn-danger-ghost" onClick={() => setConfirmandoId(lote.id)}>
-                  Eliminar
+                  Archivar
                 </button>
               )}
             </div>
