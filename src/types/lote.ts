@@ -37,6 +37,14 @@ export interface Pago {
   created_at: string
 }
 
+// Pago "enriquecido" con datos del lote al que pertenece — usado solo para
+// el reporte/exportación de contabilidad (no se guarda así en la base).
+export interface PagoConLote extends Pago {
+  numero_lote?: string
+  proyecto?: string | null
+  comprador?: string | null
+}
+
 // Colores usados en el canvas del mapa (react-konva no lee CSS vars de Tailwind)
 export const ESTADO_COLOR: Record<EstadoLote, string> = {
   disponible: '#2F6B4F',
