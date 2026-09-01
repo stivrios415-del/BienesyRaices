@@ -61,7 +61,6 @@ export const useLotesStore = create<LotesState>((set, get) => ({
     const { error } = await supabase.from('pagos').insert(pago as any)
     if (error) return { error: error.message }
 
-    // El trigger en Supabase actualiza saldo/estado del lote automáticamente.
     await get().fetchLotes()
     await get().fetchPagos(pago.lote_id)
     return { error: null }
@@ -96,10 +95,24 @@ export const useLotesStore = create<LotesState>((set, get) => ({
   },
 
   subscribeRealtime: () => {
+    // Al generar una cuadrícula grande (ej. 173 lotes de golpe), Supabase
+    // dispara un evento de "postgres_changes" POR CADA FILA insertada.
+    // Sin agrupar, eso eran ~173 recargas completas y re-renderizados del
+    // mapa en cadena — la causa principal de la traba en móvil.
+    // Se agrupan (debounce) todos los eventos que lleguen en una ráfaga y
+    // solo se recarga una vez, cuando la ráfaga se calma.
+    let timeoutLotes: ReturnType<typeof setTimeout> | null = null
+    const recargarLotesAgrupado = () => {
+      if (timeoutLotes) clearTimeout(timeoutLotes)
+      timeoutLotes = setTimeout(() => {
+        get().fetchLotes()
+      }, 400)
+    }
+
     const channel = supabase
       .channel('lotes-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lotes' }, () => {
-        get().fetchLotes()
+        recargarLotesAgrupado()
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pagos' }, () => {
         const id = get().selectedLoteId
@@ -108,6 +121,7 @@ export const useLotesStore = create<LotesState>((set, get) => ({
       .subscribe()
 
     return () => {
+      if (timeoutLotes) clearTimeout(timeoutLotes)
       supabase.removeChannel(channel)
     }
   },
