@@ -34,6 +34,7 @@ export interface Pago {
   fecha_pago: string
   metodo: MetodoPago
   numero_recibo: string | null
+  correlativo_cai: number | null
   created_at: string
 }
 
