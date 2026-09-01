@@ -22,6 +22,7 @@ export interface Lote {
   cuota_mensual: number
   saldo_restante: number
   coordenadas_poligono: Punto[]
+  archivado: boolean
   created_at: string
   updated_at: string
 }
