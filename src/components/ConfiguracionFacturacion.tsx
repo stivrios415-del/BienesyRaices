@@ -78,7 +78,7 @@ export default function ConfiguracionFacturacion({ onCerrar }: Props) {
         </button>
       </div>
       <h1 className="font-display text-xl md:text-2xl text-ink-900 mb-2">Datos para los recibos con CAI</h1>
-
+    
       <div className="card p-4 md:p-6">
         {loading ? (
           <p className="text-sm text-ink-500 font-mono">Cargando…</p>
