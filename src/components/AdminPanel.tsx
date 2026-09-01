@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLotesStore } from '../store/useLotesStore'
 import type { Lote } from '../types/lote'
 import { formatMoneda } from '../utils/format'
+import { exportarPagosExcel } from '../utils/exportarExcel'
 import FormularioLote from './FormularioLote'
 import GeneradorCuadricula from './GeneradorCuadricula'
 import Papelera from './Papelera'
@@ -12,13 +13,13 @@ export default function AdminPanel() {
   const lotes = useLotesStore((s) => s.lotes)
   const lotesArchivados = useLotesStore((s) => s.lotesArchivados)
   const fetchLotesArchivados = useLotesStore((s) => s.fetchLotesArchivados)
+  const fetchTodosPagosParaExportar = useLotesStore((s) => s.fetchTodosPagosParaExportar)
   const archivarLote = useLotesStore((s) => s.archivarLote)
   const [modo, setModo] = useState<Modo>('lista')
   const [loteEditando, setLoteEditando] = useState<Lote | null>(null)
   const [confirmandoId, setConfirmandoId] = useState<string | null>(null)
+  const [exportandoPagos, setExportandoPagos] = useState(false)
 
-  // Se carga el conteo de la papelera una vez, para mostrar el badge
-  // sin tener que entrar a la vista de papelera primero.
   useEffect(() => {
     fetchLotesArchivados()
   }, [fetchLotesArchivados])
@@ -31,6 +32,17 @@ export default function AdminPanel() {
   const handleArchivar = async (id: string) => {
     await archivarLote(id)
     setConfirmandoId(null)
+  }
+
+  const handleExportarPagos = async () => {
+    setExportandoPagos(true)
+    const pagos = await fetchTodosPagosParaExportar()
+    setExportandoPagos(false)
+    if (pagos.length === 0) {
+      alert('Todavía no hay pagos registrados para exportar.')
+      return
+    }
+    exportarPagosExcel(pagos)
   }
 
   if (modo === 'papelera') {
@@ -75,6 +87,13 @@ export default function AdminPanel() {
           <h1 className="font-display text-xl md:text-2xl text-ink-900">Parcelas registradas</h1>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            onClick={handleExportarPagos}
+            disabled={exportandoPagos}
+            className="btn-secondary disabled:opacity-40"
+          >
+            {exportandoPagos ? 'Preparando…' : '⬇ Exportar pagos (Excel)'}
+          </button>
           <button onClick={() => setModo('papelera')} className="btn-secondary relative">
             🗑 Papelera
             {lotesArchivados.length > 0 && (
