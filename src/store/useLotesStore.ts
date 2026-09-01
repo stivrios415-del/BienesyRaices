@@ -16,7 +16,8 @@ interface LotesState {
   selectLote: (id: string | null) => void
   fetchPagos: (loteId: string) => Promise<void>
   fetchTodosPagosParaExportar: () => Promise<PagoConLote[]>
-  registrarPago: (pago: Omit<Pago, 'id' | 'created_at'>) => Promise<{ error: string | null }>
+  registrarPago: (pago: Omit<Pago, 'id' | 'created_at' | 'correlativo_cai'>) => Promise<{ error: string | null }>
+  asignarCorrelativoCai: (pagoId: string, correlativo: number) => Promise<{ error: string | null }>
   crearLote: (lote: Partial<Lote>) => Promise<{ error: string | null }>
   crearLotesMasivo: (lotes: Partial<Lote>[]) => Promise<{ error: string | null }>
   actualizarLote: (id: string, cambios: Partial<Lote>) => Promise<{ error: string | null }>
@@ -81,10 +82,6 @@ export const useLotesStore = create<LotesState>((set, get) => ({
     }
   },
 
-  // Trae TODOS los pagos de TODOS los lotes, con el número de lote/proyecto/
-  // comprador ya incrustado (join con "lotes"), listo para el reporte de
-  // contabilidad. No se guarda en el estado global: es un dato de un solo
-  // uso para exportar, no algo que la interfaz necesite mantener actualizado.
   fetchTodosPagosParaExportar: async () => {
     const { data, error } = await supabase
       .from('pagos')
@@ -100,6 +97,7 @@ export const useLotesStore = create<LotesState>((set, get) => ({
       fecha_pago: p.fecha_pago,
       metodo: p.metodo,
       numero_recibo: p.numero_recibo,
+      correlativo_cai: p.correlativo_cai,
       created_at: p.created_at,
       numero_lote: p.lote?.numero_lote,
       proyecto: p.lote?.proyecto,
@@ -113,6 +111,15 @@ export const useLotesStore = create<LotesState>((set, get) => ({
 
     await get().fetchLotes()
     await get().fetchPagos(pago.lote_id)
+    return { error: null }
+  },
+
+  // Guarda el número de recibo oficial (correlativo del CAI) en el pago,
+  // una sola vez — reimprimir el mismo recibo después reutiliza el mismo
+  // número en vez de consumir uno nuevo.
+  asignarCorrelativoCai: async (pagoId, correlativo) => {
+    const { error } = await supabase.from('pagos').update({ correlativo_cai: correlativo } as any).eq('id', pagoId)
+    if (error) return { error: error.message }
     return { error: null }
   },
 
