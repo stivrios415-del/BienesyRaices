@@ -3,6 +3,7 @@ import { useLotesStore } from '../store/useLotesStore'
 import { ESTADO_COLOR, ESTADO_COLOR_BG, ESTADO_LABEL } from '../types/lote'
 import type { EstadoLote, Lote } from '../types/lote'
 import { formatMoneda } from '../utils/format'
+import { exportarLotesExcel } from '../utils/exportarExcel'
 
 interface Props {
   onSelect: (lote: Lote) => void
@@ -32,9 +33,18 @@ export default function TablaLotes({ onSelect }: Props) {
 
   return (
     <div className="p-4 md:p-8 space-y-4 md:space-y-5 max-w-6xl mx-auto">
-      <div>
-        <div className="eyebrow mb-1">Registro</div>
-        <h1 className="font-display text-xl md:text-2xl text-ink-900">Todos los lotes</h1>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+        <div>
+          <div className="eyebrow mb-1">Registro</div>
+          <h1 className="font-display text-xl md:text-2xl text-ink-900">Todos los lotes</h1>
+        </div>
+        <button
+          onClick={() => exportarLotesExcel(filtrados)}
+          disabled={filtrados.length === 0}
+          className="btn-secondary disabled:opacity-40"
+        >
+          ⬇ Exportar a Excel {filtrados.length > 0 && `(${filtrados.length})`}
+        </button>
       </div>
 
       <div className="card p-3.5 flex flex-wrap gap-3 items-center">
@@ -121,7 +131,7 @@ export default function TablaLotes({ onSelect }: Props) {
         </table>
       </div>
 
-      {/* Tarjetas apilables — solo en móvil, en vez de una tabla apretada con scroll horizontal */}
+      {/* Tarjetas apilables — solo en móvil */}
       <div className="md:hidden space-y-2.5">
         {filtrados.map((lote) => (
           <button
