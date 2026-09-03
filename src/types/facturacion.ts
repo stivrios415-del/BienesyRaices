@@ -1,5 +1,5 @@
 export interface ConfigFacturacion {
-  id: string
+  empresa_id: string
   razon_social: string
   rtn: string
   direccion: string
