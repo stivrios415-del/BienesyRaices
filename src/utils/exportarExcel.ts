@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx-js-style'
 import type { Lote, PagoConLote } from '../types/lote'
+import type { ReciboConLote } from '../types/facturacion'
 import { ESTADO_LABEL } from '../types/lote'
 
 // --- Paleta compartida con el resto de la app (ver tailwind.config.js) ---
@@ -190,4 +191,29 @@ export function exportarPagosExcel(pagos: PagoConLote[]) {
   const libro = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(libro, hoja, 'Pagos')
   descargarLibro(libro, `pagos-${fechaHoy()}.xlsx`)
+}
+
+/**
+ * Exporta la bitácora de recibos emitidos (con CAI): correlativo, lote,
+ * comprador, monto, fecha y quién lo emitió.
+ */
+export function exportarRecibosExcel(recibos: ReciboConLote[]) {
+  const filas = recibos.map((r) => ({
+    'No. Recibo': r.correlativo,
+    'N.º Lote': r.numero_lote ?? '',
+    'Terreno / proyecto': r.proyecto ?? '',
+    Comprador: r.comprador ?? '',
+    Monto: r.monto,
+    'Fecha de emisión': r.fecha_emision,
+    'Emitido por': r.emitido_por ?? '',
+  }))
+
+  const hoja = XLSX.utils.json_to_sheet(filas)
+  hoja['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 22 }, { wch: 14 }, { wch: 18 }, { wch: 24 }]
+
+  aplicarEstilos(hoja, { columnasMoneda: [4], columnasCentradas: [0, 5] })
+
+  const libro = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(libro, hoja, 'Recibos')
+  descargarLibro(libro, `recibos-${fechaHoy()}.xlsx`)
 }
