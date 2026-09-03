@@ -17,11 +17,10 @@ export default function LoteDetallePanel({ loteId, onClose }: Props) {
   const { session } = useAuthStore()
   const fetchPagos = useLotesStore((s) => s.fetchPagos)
   const pagosPorLote = useLotesStore((s) => s.pagosPorLote)
-  const asignarCorrelativoCai = useLotesStore((s) => s.asignarCorrelativoCai)
 
   const configFacturacion = useFacturacionStore((s) => s.config)
   const fetchConfigFacturacion = useFacturacionStore((s) => s.fetchConfig)
-  const siguienteCorrelativo = useFacturacionStore((s) => s.siguienteCorrelativo)
+  const emitirRecibo = useFacturacionStore((s) => s.emitirRecibo)
 
   const lote = useLotesStore((s) => s.lotes.find((l) => l.id === loteId) ?? null)
 
@@ -63,13 +62,12 @@ export default function LoteDetallePanel({ loteId, onClose }: Props) {
 
     let correlativo = pago.correlativo_cai
     if (!correlativo) {
-      const nuevo = await siguienteCorrelativo()
+      const nuevo = await emitirRecibo(pago.id, lote.id, pago.monto)
       if (!nuevo) {
         setGenerandoReciboId(null)
         alert('No se pudo generar el número de recibo. Intenta de nuevo.')
         return
       }
-      await asignarCorrelativoCai(pago.id, nuevo)
       await fetchPagos(lote.id)
       correlativo = nuevo
     }
