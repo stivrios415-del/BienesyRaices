@@ -24,7 +24,10 @@ export const useFacturacionStore = create<FacturacionState>((set) => ({
 
   fetchConfig: async () => {
     set({ loading: true })
-    const { data, error } = await supabase.from('config_facturacion').select('*').eq('id', 'default').single()
+    // Ya no se filtra por "id = 'default'": ahora config_facturacion tiene
+    // una fila por empresa, y RLS solo deja ver la propia — así que
+    // simplemente se pide la (única) fila visible para el usuario actual.
+    const { data, error } = await supabase.from('config_facturacion').select('*').single()
     if (!error && data) {
       set({ config: data as ConfigFacturacion, loading: false })
     } else {
