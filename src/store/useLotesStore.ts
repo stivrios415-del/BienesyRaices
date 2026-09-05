@@ -24,6 +24,10 @@ interface LotesState {
   restaurarLote: (id: string) => Promise<{ error: string | null }>
   eliminarLotePermanente: (id: string) => Promise<{ error: string | null }>
   subscribeRealtime: () => () => void
+  // Limpia todo lo que haya en memoria — se llama al cerrar sesión o al
+  // detectar un cambio de usuario, para que nunca quede en pantalla un
+  // dato de la sesión anterior mientras llega la respuesta nueva.
+  resetLotes: () => void
 }
 
 export const useLotesStore = create<LotesState>((set, get) => ({
@@ -181,5 +185,17 @@ export const useLotesStore = create<LotesState>((set, get) => ({
       if (timeoutLotes) clearTimeout(timeoutLotes)
       supabase.removeChannel(channel)
     }
+  },
+
+  resetLotes: () => {
+    set({
+      lotes: [],
+      lotesArchivados: [],
+      loading: false,
+      loadingArchivados: false,
+      error: null,
+      selectedLoteId: null,
+      pagosPorLote: {},
+    })
   },
 }))
