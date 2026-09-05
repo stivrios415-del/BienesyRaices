@@ -8,8 +8,9 @@ import GeneradorCuadricula from './GeneradorCuadricula'
 import Papelera from './Papelera'
 import ConfiguracionFacturacion from './ConfiguracionFacturacion'
 import RecibosEmitidos from './RecibosEmitidos'
+import ReportesFinancieros from './ReportesFinancieros'
 
-type Modo = 'lista' | 'generar' | 'crear-manual' | 'editar' | 'papelera' | 'facturacion' | 'recibos'
+type Modo = 'lista' | 'generar' | 'crear-manual' | 'editar' | 'papelera' | 'facturacion' | 'recibos' | 'reportes'
 
 export default function AdminPanel() {
   const lotes = useLotesStore((s) => s.lotes)
@@ -45,6 +46,10 @@ export default function AdminPanel() {
       return
     }
     exportarPagosExcel(pagos)
+  }
+
+  if (modo === 'reportes') {
+    return <ReportesFinancieros onCerrar={() => setModo('lista')} />
   }
 
   if (modo === 'recibos') {
@@ -97,6 +102,9 @@ export default function AdminPanel() {
           <h1 className="font-display text-xl md:text-2xl text-ink-900">Parcelas registradas</h1>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button onClick={() => setModo('reportes')} className="btn-primary">
+            📊 Reportes
+          </button>
           <button onClick={() => setModo('facturacion')} className="btn-secondary">
             ⚙ Facturación
           </button>
