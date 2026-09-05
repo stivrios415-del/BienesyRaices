@@ -14,6 +14,7 @@ interface FacturacionState {
   // datos (función emitir_recibo, migración 0006). Devuelve null si falla.
   emitirRecibo: (pagoId: string, loteId: string, monto: number) => Promise<number | null>
   fetchRecibos: () => Promise<void>
+  resetFacturacion: () => void
 }
 
 export const useFacturacionStore = create<FacturacionState>((set) => ({
@@ -72,5 +73,9 @@ export const useFacturacionStore = create<FacturacionState>((set) => ({
     } else {
       set({ loadingRecibos: false })
     }
+  },
+
+  resetFacturacion: () => {
+    set({ config: null, loading: false, recibos: [], loadingRecibos: false })
   },
 }))
