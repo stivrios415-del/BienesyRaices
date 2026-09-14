@@ -187,6 +187,7 @@ export default function LoteDetallePanel({ loteId, onClose }: Props) {
                 <thead>
                   <tr className="text-left text-ink-500 border-b border-paper-line text-[11px] uppercase tracking-wide">
                     <th className="py-1.5 font-medium">Fecha</th>
+                    <th className="py-1.5 font-medium">Recibo</th>
                     <th className="py-1.5 font-medium">Monto</th>
                     <th className="py-1.5 font-medium">Método</th>
                     {session && <th className="py-1.5 font-medium"></th>}
@@ -196,6 +197,7 @@ export default function LoteDetallePanel({ loteId, onClose }: Props) {
                   {pagos.map((p) => (
                     <tr key={p.id} className="border-b border-paper-line/70 last:border-0">
                       <td className="py-2 font-mono text-xs text-ink-700">{formatFecha(p.fecha_pago)}</td>
+                      <td className="py-2 font-mono text-xs tabular text-ink-500">{p.numero_recibo ?? '—'}</td>
                       <td className="py-2 font-mono text-xs tabular text-ink-900">{formatMoneda(p.monto)}</td>
                       <td className="py-2 capitalize text-ink-700">{p.metodo}</td>
                       {session && (
