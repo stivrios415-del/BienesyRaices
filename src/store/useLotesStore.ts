@@ -16,7 +16,9 @@ interface LotesState {
   selectLote: (id: string | null) => void
   fetchPagos: (loteId: string) => Promise<void>
   fetchTodosPagosParaExportar: () => Promise<PagoConLote[]>
-  registrarPago: (pago: Omit<Pago, 'id' | 'created_at' | 'correlativo_cai'>) => Promise<{ error: string | null }>
+  registrarPago: (
+    pago: Omit<Pago, 'id' | 'created_at' | 'correlativo_cai' | 'numero_recibo'>
+  ) => Promise<{ error: string | null }>
   crearLote: (lote: Partial<Lote>) => Promise<{ error: string | null }>
   crearLotesMasivo: (lotes: Partial<Lote>[]) => Promise<{ error: string | null }>
   actualizarLote: (id: string, cambios: Partial<Lote>) => Promise<{ error: string | null }>
