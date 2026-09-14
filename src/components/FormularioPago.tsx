@@ -9,7 +9,6 @@ const schema = z.object({
   monto: z.coerce.number().positive('El monto debe ser mayor a 0'),
   fecha_pago: z.string().min(1, 'La fecha es requerida'),
   metodo: z.enum(['efectivo', 'transferencia', 'tarjeta']),
-  numero_recibo: z.string().optional(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -45,7 +44,6 @@ export default function FormularioPago({ lote, onSuccess, onCancel }: Props) {
       monto: values.monto,
       fecha_pago: values.fecha_pago,
       metodo: values.metodo as MetodoPago,
-      numero_recibo: values.numero_recibo || null,
     })
     setEnviando(false)
     if (error) {
@@ -85,10 +83,9 @@ export default function FormularioPago({ lote, onSuccess, onCancel }: Props) {
         </select>
       </div>
 
-      <div>
-        <label className="label-field">N.º de recibo (opcional)</label>
-        <input type="text" {...register('numero_recibo')} className="input-field font-mono" />
-      </div>
+      <p className="text-[11px] text-ink-500 italic">
+        El número de recibo se asigna solo, automáticamente, al guardar — no se escribe a mano.
+      </p>
 
       {errorGeneral && <p className="text-estado-vendido text-sm">{errorGeneral}</p>}
 
